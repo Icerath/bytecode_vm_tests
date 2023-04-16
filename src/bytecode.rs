@@ -49,6 +49,7 @@ pub enum BinOp {
 #[derive(Debug, Default)]
 pub struct Pool {
     items: Vec<u8>,
+    num_instructions: u16,
 }
 
 impl Pool {
@@ -56,11 +57,13 @@ impl Pool {
     pub fn push_int(&mut self, int: i64) {
         self.items.push(Instruction::LoadInt as u8);
         self.items.extend_from_slice(&int.to_le_bytes());
+        self.num_instructions += 1;
     }
     #[inline]
     pub fn push_float(&mut self, float: f64) {
         self.items.push(Instruction::LoadFloat as u8);
         self.items.extend_from_slice(&float.to_le_bytes());
+        self.num_instructions += 1;
     }
     /// Pushes a null terminated string
     #[inline]
@@ -68,16 +71,24 @@ impl Pool {
         self.items.push(Instruction::LoadStr as u8);
         self.items.extend_from_slice(str.as_bytes());
         self.items.push(0);
+        self.num_instructions += 1;
     }
     #[inline]
     pub fn push_binop(&mut self, binop: BinOp) {
         self.items.push(Instruction::BinOp as u8);
         self.items.push(binop as u8);
+        self.num_instructions += 1;
     }
     #[inline]
     pub fn push_pop_jump_if_false(&mut self, distance: u16) {
         self.items.push(Instruction::PopJumpIfFalse as u8);
         self.items.extend_from_slice(&distance.to_le_bytes());
+        self.num_instructions += 1;
+    }
+    #[inline]
+    pub fn push_if(&mut self, subpool: &Pool) {
+        self.push_pop_jump_if_false(subpool.num_instructions);
+        self.items.extend_from_slice(&subpool.items);
     }
     /// # Safety
     /// The vm can assume instructions are followed by their proper arguments
