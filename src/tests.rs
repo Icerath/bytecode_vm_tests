@@ -63,3 +63,44 @@ pub fn test_int_add() {
     let stack = vm::create_and_run(pool.as_bytes());
     assert_eq!(stack, vec![Value::Int(3)]);
 }
+
+#[test]
+pub fn test_float_add() {
+    let mut pool = Pool::default();
+    pool.push_float(1.23);
+    pool.push_float(4.56);
+
+    pool.push_binop(BinOp::Add);
+
+    let stack = vm::create_and_run(pool.as_bytes());
+    assert_eq!(stack, vec![Value::Float(1.23 + 4.56)]);
+}
+
+#[test]
+pub fn test_int_float_add() {
+    let mut pool = Pool::default();
+    pool.push_int(1);
+    pool.push_float(0.5);
+    pool.push_binop(BinOp::Add);
+
+    pool.push_float(12.5);
+    pool.push_int(2);
+    pool.push_binop(BinOp::Add);
+
+    let stack = vm::create_and_run(pool.as_bytes());
+    assert_eq!(
+        stack,
+        vec![Value::Float(1.0 + 0.5), Value::Float(12.5 + 2.0)]
+    );
+}
+
+#[test]
+pub fn test_str_add() {
+    let mut pool = Pool::default();
+    pool.push_str("Hello, ");
+    pool.push_str("World!");
+    pool.push_binop(BinOp::Add);
+
+    let stack = vm::create_and_run(pool.as_bytes());
+    assert_eq!(stack, vec![Value::Str(Cow::Owned("Hello, World!".into()))]);
+}

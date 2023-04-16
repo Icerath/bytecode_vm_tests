@@ -69,12 +69,12 @@ impl<'a> Vm<'a> {
                 let op_byte = self.bytes[self.head];
                 let op: BinOp = unsafe { std::mem::transmute(op_byte) };
 
-                let lhs = self.stack.pop().unwrap();
                 let rhs = self.stack.pop().unwrap();
+                let lhs = self.stack.pop().unwrap();
 
                 let new_value = Value::run_binop(lhs, rhs, op);
                 self.stack.push(new_value);
-                
+
                 self.head += 1;
             }
             Instruction::NOOP => (),
