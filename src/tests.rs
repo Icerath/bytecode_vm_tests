@@ -343,3 +343,44 @@ mod test_pop_jump_if_false {
         assert_eq!(stack, vec![Value::Str(Cow::Borrowed("else"))]);
     }
 }
+
+mod loops {
+    use super::*;
+
+    #[test]
+    fn test_break_loop() {
+        let mut pool = Pool::default();
+        pool.push_int(10);
+
+        let mut loop_body = Pool::default();
+        loop_body.push_dup();
+        loop_body.push_pop_jump_if_false_raw(9 + 2 + 5);
+
+        loop_body.push_int(1);
+        loop_body.push_binop(BinOp::Sub);
+
+        pool.push_loop(&loop_body);
+
+        let stack = vm::create_and_run(&pool);
+
+        assert_eq!(stack, vec![Value::Int(0)]);
+    }
+
+    #[test]
+    fn test_while_loop() {
+        let mut pool = Pool::default();
+        pool.push_int(10);
+
+        let mut condition = Pool::default();
+        condition.push_int(1);
+        condition.push_binop(BinOp::Sub);
+        condition.push_dup();
+
+        let loop_body = Pool::default();
+        pool.push_while_loop(&condition, &loop_body);
+
+        let stack = vm::create_and_run(&pool);
+
+        assert_eq!(stack, vec![Value::Int(0)]);
+    }
+}

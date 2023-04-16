@@ -44,6 +44,10 @@ impl<'a> Vm<'a> {
         let instruction: Instruction = unsafe { std::mem::transmute(instruction_byte) };
 
         match instruction {
+            Instruction::Dup => {
+                let top = self.stack.last().unwrap();
+                self.stack.push(top.clone());
+            }
             Instruction::LoadInt => {
                 let int_bytes = self.bytes[self.head..self.head + 8].try_into().unwrap();
                 let int = i64::from_le_bytes(int_bytes);

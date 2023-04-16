@@ -5,6 +5,8 @@ use std::ops::Deref;
 pub enum Instruction {
     NOOP = 0,
 
+    Dup,
+
     BinOp,
 
     LoadStr,
@@ -23,7 +25,7 @@ impl Instruction {
         Some(match self {
             Self::LoadStr => return None,
             Self::NOOP | Self::LEN => 0,
-            Self::BinOp => 1,
+            Self::BinOp | Self::Dup => 1,
             Self::Jump | Self::PopJumpIfFalse => 4,
             Self::LoadInt | Self::LoadFloat => 8,
         })
@@ -53,6 +55,10 @@ pub struct Pool {
 }
 
 impl Pool {
+    #[inline]
+    pub fn push_dup(&mut self) {
+        self.items.push(Instruction::Dup as u8);
+    }
     #[inline]
     pub fn push_jump_raw(&mut self, distance: i32) {
         self.items.push(Instruction::Jump as u8);
@@ -98,6 +104,17 @@ impl Pool {
         self.items.extend_from_slice(&or_else.items);
     }
     #[inline]
+    pub fn push_loop(&mut self, body: &Pool) {
+        self.items.extend_from_slice(body);
+        self.push_jump_raw(-body.len_i32() - 5);
+    }
+    #[inline]
+    pub fn push_while_loop(&mut self, condition: &Pool, body: &Pool) {
+        self.items.extend_from_slice(condition);
+        self.push_pop_jump_if_false_raw(body.len_i32() + 5);
+        self.items.extend_from_slice(body);
+        self.push_jump_raw(-(condition.len_i32() + 5 + body.len_i32() + 5));
+    }
     #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         self

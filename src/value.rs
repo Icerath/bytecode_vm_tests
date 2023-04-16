@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use crate::bytecode::BinOp;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Value<'a> {
     Int(i64),
     Float(f64),
