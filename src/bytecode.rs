@@ -10,10 +10,6 @@ pub enum Instruction {
     LoadStr,
     LoadInt,
     LoadFloat,
-    LoadPtr,
-
-    GetPtr,
-    ReadPtr,
 
     LEN,
 }
@@ -50,11 +46,6 @@ impl Pool {
     pub fn push_float(&mut self, float: f64) {
         self.items.push(Instruction::LoadFloat as u8);
         self.items.extend_from_slice(&float.to_le_bytes());
-    }
-    #[inline]
-    pub fn push_ptr(&mut self, ptr: usize) {
-        self.items.push(Instruction::LoadPtr as u8);
-        self.items.extend_from_slice(&ptr.to_le_bytes());
     }
     /// Pushes a null terminated string
     #[inline]
