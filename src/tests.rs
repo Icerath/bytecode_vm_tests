@@ -233,7 +233,7 @@ mod test_jump {
     #[test]
     fn jump() {
         let mut pool = Pool::default();
-        pool.push_jump(2);
+        pool.push_jump_raw(18);
 
         pool.push_int(1);
         pool.push_int(2);
@@ -252,7 +252,7 @@ mod test_pop_jump_if_false {
         let mut pool = Pool::default();
         pool.push_int(5);
         pool.push_int(0);
-        pool.push_pop_jump_if_false(2);
+        pool.push_pop_jump_if_false_raw(18);
         pool.push_int(2);
         pool.push_float(3.3);
 
@@ -265,7 +265,7 @@ mod test_pop_jump_if_false {
         let mut pool = Pool::default();
         pool.push_int(5);
         pool.push_int(1);
-        pool.push_pop_jump_if_false(2);
+        pool.push_pop_jump_if_false_raw(18);
         pool.push_int(2);
         pool.push_float(3.3);
 
