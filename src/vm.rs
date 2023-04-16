@@ -33,8 +33,6 @@ impl<'a> Vm<'a> {
             self.run_next();
         }
     }
-    /// ## Panics
-    /// - TODO
     pub fn run_next(&mut self) {
         let instruction_byte = self.bytes[self.head];
         self.head += 1;
@@ -79,8 +77,49 @@ impl<'a> Vm<'a> {
 
                 self.head += 1;
             }
+            Instruction::PopJumpIfFalse => {
+                let jump_distance_bytes = self.bytes[self.head..self.head + 2].try_into().unwrap();
+                let jump_distance = u16::from_le_bytes(jump_distance_bytes);
+                self.head += 2;
+
+                let value = self.stack.pop().unwrap();
+                if !bool::from(&value) {
+                    self.skip_instructions(jump_distance);
+                }
+            }
+
             Instruction::NOOP => (),
-            _ => todo!("{instruction:?}"),
+            Instruction::LEN => todo!("{instruction:?}"),
+        }
+    }
+    pub fn skip_instructions(&mut self, num: u16) {
+        for _ in 0..num {
+            let instruction = self.read_instruction().unwrap();
+            self.head += 1;
+
+            let size = match instruction.size() {
+                Some(size) => size as usize,
+                None => slice_take_while_ne(&self.bytes[self.head..], &0).len(),
+            };
+
+            self.head += size;
+        }
+    }
+    #[inline]
+    #[must_use]
+    pub fn read_instruction(&self) -> Option<Instruction> {
+        let byte = self.bytes[self.head];
+        assert!(byte < Instruction::LEN as u8);
+        unsafe { std::mem::transmute(byte) }
+    }
+}
+
+impl<'a> From<&Value<'a>> for bool {
+    fn from(value: &Value<'a>) -> Self {
+        match value {
+            Value::Int(int) => *int != 0,
+            Value::Str(str) => str.is_empty(),
+            Value::Float(float) => *float != 0.0,
         }
     }
 }

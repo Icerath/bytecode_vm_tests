@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum Instruction {
     NOOP = 0,
@@ -11,7 +11,22 @@ pub enum Instruction {
     LoadInt,
     LoadFloat,
 
+    PopJumpIfFalse,
+
     LEN,
+}
+
+impl Instruction {
+    #[must_use]
+    pub fn size(self) -> Option<u8> {
+        Some(match self {
+            Self::LoadStr => return None,
+            Self::NOOP | Self::LEN => 0,
+            Self::BinOp => 1,
+            Self::LoadInt | Self::LoadFloat => 8,
+            Self::PopJumpIfFalse => 2,
+        })
+    }
 }
 
 #[repr(u8)]
@@ -58,6 +73,11 @@ impl Pool {
     pub fn push_binop(&mut self, binop: BinOp) {
         self.items.push(Instruction::BinOp as u8);
         self.items.push(binop as u8);
+    }
+    #[inline]
+    pub fn push_pop_jump_if_false(&mut self, distance: u16) {
+        self.items.push(Instruction::PopJumpIfFalse as u8);
+        self.items.extend_from_slice(&distance.to_le_bytes());
     }
     /// # Safety
     /// The vm can assume instructions are followed by their proper arguments

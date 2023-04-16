@@ -226,3 +226,19 @@ mod binop_mul {
         );
     }
 }
+
+mod test_pop_jump_if_false {
+    use super::*;
+    #[test]
+    fn jump() {
+        let mut pool = Pool::default();
+        pool.push_int(5);
+        pool.push_int(0);
+        pool.push_pop_jump_if_false(2);
+        pool.push_int(2);
+        pool.push_float(3.3);
+
+        let stack = vm::create_and_run(&pool);
+        assert_eq!(stack, vec![Value::Int(5)]);
+    }
+}
