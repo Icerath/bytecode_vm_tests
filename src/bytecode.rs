@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 #[derive(Debug)]
 #[repr(u8)]
 pub enum Instruction {
@@ -86,6 +88,13 @@ impl Pool {
     }
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
+        self
+    }
+}
+
+impl Deref for Pool {
+    type Target = [u8];
+    fn deref(&self) -> &Self::Target {
         &self.items
     }
 }

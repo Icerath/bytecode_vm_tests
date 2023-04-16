@@ -18,7 +18,7 @@ mod load_literals {
             pool.push_int(int);
         }
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         let expected_stack: Vec<Value> = ints.into_iter().map(Value::Int).collect();
         assert_eq!(stack, expected_stack);
     }
@@ -32,7 +32,7 @@ mod load_literals {
             pool.push_float(float);
         }
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         let expected_stack: Vec<Value> = floats.into_iter().map(Value::Float).collect();
         assert_eq!(stack, expected_stack);
     }
@@ -46,7 +46,7 @@ mod load_literals {
             pool.push_str(str);
         }
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
 
         let expected_stack: Vec<Value> = strings
             .into_iter()
@@ -67,7 +67,7 @@ mod binop_add {
         pool.push_int(2);
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Int(3)]);
     }
 
@@ -79,7 +79,7 @@ mod binop_add {
 
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Float(1.23 + 4.56)]);
     }
 
@@ -94,7 +94,7 @@ mod binop_add {
         pool.push_int(2);
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(
             stack,
             vec![Value::Float(1.0 + 0.5), Value::Float(12.5 + 2.0)]
@@ -108,7 +108,7 @@ mod binop_add {
         pool.push_str("World!");
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Str(Cow::Owned("Hello, World!".into()))]);
     }
 }
@@ -124,7 +124,7 @@ mod binop_sub {
         pool.push_int(2);
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Int(-1)]);
     }
 
@@ -136,7 +136,7 @@ mod binop_sub {
 
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Float(1.23 - 4.56)]);
     }
 
@@ -151,7 +151,7 @@ mod binop_sub {
         pool.push_int(2);
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(
             stack,
             vec![Value::Float(1.0 - 0.5), Value::Float(12.5 - 2.0)]
@@ -170,7 +170,7 @@ mod binop_mul {
         pool.push_int(2);
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Int(2)]);
     }
 
@@ -182,7 +182,7 @@ mod binop_mul {
 
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Float(1.23 * 4.56)]);
     }
 
@@ -197,7 +197,7 @@ mod binop_mul {
         pool.push_int(2);
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(
             stack,
             vec![Value::Float(1.0 * 0.5), Value::Float(12.5 * 2.0)]
@@ -216,7 +216,7 @@ mod binop_mul {
         pool.push_str("hello ");
         pool.push_binop(OP);
 
-        let stack = vm::create_and_run(pool.as_bytes());
+        let stack = vm::create_and_run(&pool);
         assert_eq!(
             stack,
             vec![

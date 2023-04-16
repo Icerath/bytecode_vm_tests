@@ -7,7 +7,7 @@ fn main() {
     pool.push_float(1.10);
     pool.push_str("Hello, World!");
 
-    let mut vm = Vm::new(pool.as_bytes());
+    let mut vm = Vm::new(&pool);
     vm.run();
     println!("{:?}", vm.stack);
 }
