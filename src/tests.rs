@@ -158,3 +158,71 @@ mod binop_sub {
         );
     }
 }
+
+mod binop_mul {
+    use super::*;
+    const OP: BinOp = BinOp::Mul;
+
+    #[test]
+    pub fn int() {
+        let mut pool = Pool::default();
+        pool.push_int(1);
+        pool.push_int(2);
+        pool.push_binop(OP);
+
+        let stack = vm::create_and_run(pool.as_bytes());
+        assert_eq!(stack, vec![Value::Int(2)]);
+    }
+
+    #[test]
+    pub fn float() {
+        let mut pool = Pool::default();
+        pool.push_float(1.23);
+        pool.push_float(4.56);
+
+        pool.push_binop(OP);
+
+        let stack = vm::create_and_run(pool.as_bytes());
+        assert_eq!(stack, vec![Value::Float(1.23 * 4.56)]);
+    }
+
+    #[test]
+    pub fn int_float() {
+        let mut pool = Pool::default();
+        pool.push_int(1);
+        pool.push_float(0.5);
+        pool.push_binop(OP);
+
+        pool.push_float(12.5);
+        pool.push_int(2);
+        pool.push_binop(OP);
+
+        let stack = vm::create_and_run(pool.as_bytes());
+        assert_eq!(
+            stack,
+            vec![Value::Float(1.0 * 0.5), Value::Float(12.5 * 2.0)]
+        );
+    }
+
+    #[test]
+    pub fn str_int() {
+        let mut pool = Pool::default();
+
+        pool.push_str("repeat ");
+        pool.push_int(5);
+        pool.push_binop(OP);
+
+        pool.push_int(3);
+        pool.push_str("hello ");
+        pool.push_binop(OP);
+
+        let stack = vm::create_and_run(pool.as_bytes());
+        assert_eq!(
+            stack,
+            vec![
+                Value::Str(Cow::Owned("repeat ".repeat(5))),
+                Value::Str(Cow::Owned("hello ".repeat(3)))
+            ]
+        );
+    }
+}

@@ -15,6 +15,8 @@ impl<'a> Value<'a> {
         match op {
             BinOp::Add => Self::add(lhs, rhs),
             BinOp::Sub => Self::sub(lhs, rhs),
+            BinOp::Mul => Self::mul(lhs, rhs),
+
             _ => todo!("{op:?}"),
         }
     }
@@ -39,6 +41,23 @@ impl<'a> Value<'a> {
             (Self::Int(lhs), Self::Float(rhs)) => Self::Float(lhs as f64 - rhs),
             (Self::Float(lhs), Self::Int(rhs)) => Self::Float(lhs - rhs as f64),
             (Self::Float(lhs), Self::Float(rhs)) => Self::Float(lhs - rhs),
+            (lhs, rhs) => todo!("{lhs:?} - {rhs:?}"),
+        }
+    }
+
+    #[allow(clippy::cast_precision_loss)]
+    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_sign_loss)]
+    fn mul(lhs: Self, rhs: Self) -> Self {
+        match (lhs, rhs) {
+            (Self::Int(lhs), Self::Int(rhs)) => Self::Int(lhs * rhs),
+            (Self::Int(lhs), Self::Float(rhs)) => Self::Float(lhs as f64 * rhs),
+            (Self::Float(lhs), Self::Int(rhs)) => Self::Float(lhs * rhs as f64),
+            (Self::Float(lhs), Self::Float(rhs)) => Self::Float(lhs * rhs),
+            (Self::Str(str), Self::Int(int)) | (Self::Int(int), Self::Str(str)) => {
+                Self::Str(Cow::Owned(str.repeat(int as usize)))
+            }
+
             (lhs, rhs) => todo!("{lhs:?} - {rhs:?}"),
         }
     }
