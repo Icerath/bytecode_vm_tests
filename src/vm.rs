@@ -1,6 +1,15 @@
 use std::borrow::Cow;
 
-use crate::{bytecode::Instruction, value::Value};
+use crate::{
+    bytecode::{BinOp, Instruction},
+    value::Value,
+};
+
+pub fn create_and_run(bytes: &[u8]) -> Vec<Value> {
+    let mut vm = Vm::new(bytes);
+    vm.run();
+    vm.stack
+}
 
 #[derive(Debug)]
 pub struct Vm<'a> {
@@ -22,6 +31,8 @@ impl<'a> Vm<'a> {
             self.run_next();
         }
     }
+    /// ## Panics
+    /// - TODO
     pub fn run_next(&mut self) {
         let instruction_byte = self.bytes[self.head];
         self.head += 1;
@@ -37,19 +48,34 @@ impl<'a> Vm<'a> {
                 let int_bytes = self.bytes[self.head..self.head + 8].try_into().unwrap();
                 let int = i64::from_le_bytes(int_bytes);
                 self.stack.push(Value::Int(int));
+
                 self.head += 8;
             }
             Instruction::LoadFloat => {
                 let float_bytes = self.bytes[self.head..self.head + 8].try_into().unwrap();
                 let float = f64::from_le_bytes(float_bytes);
                 self.stack.push(Value::Float(float));
+
                 self.head += 8;
             }
             Instruction::LoadStr => {
                 let string_bytes = slice_take_while_ne(&self.bytes[self.head..], &0);
                 let string = std::str::from_utf8(string_bytes).unwrap();
                 self.stack.push(Value::Str(Cow::Borrowed(string)));
+
                 self.head += string_bytes.len();
+            }
+            Instruction::BinOp => {
+                let op_byte = self.bytes[self.head];
+                let op: BinOp = unsafe { std::mem::transmute(op_byte) };
+
+                let lhs = self.stack.pop().unwrap();
+                let rhs = self.stack.pop().unwrap();
+
+                let new_value = Value::run_binop(lhs, rhs, op);
+                self.stack.push(new_value);
+                
+                self.head += 1;
             }
             Instruction::NOOP => (),
             _ => todo!("{instruction:?}"),

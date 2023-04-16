@@ -17,6 +17,7 @@ pub enum Instruction {
 }
 
 #[repr(u8)]
+#[derive(Debug, Clone, Copy)]
 pub enum BinOp {
     Add = 0,
     Sub,

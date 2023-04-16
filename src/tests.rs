@@ -1,6 +1,10 @@
-use std::{borrow::Cow, fmt::LowerExp};
+use std::borrow::Cow;
 
-use crate::{bytecode::Pool, value::Value, vm::Vm};
+use crate::{
+    bytecode::{BinOp, Pool},
+    value::Value,
+    vm,
+};
 
 #[test]
 pub fn test_ints() {
@@ -11,11 +15,9 @@ pub fn test_ints() {
         pool.push_int(int);
     }
 
-    let mut vm = Vm::new(pool.as_bytes());
-    vm.run();
-
+    let stack = vm::create_and_run(pool.as_bytes());
     let expected_stack: Vec<Value> = ints.into_iter().map(Value::Int).collect();
-    assert_eq!(vm.stack, expected_stack);
+    assert_eq!(stack, expected_stack);
 }
 
 #[test]
@@ -27,11 +29,9 @@ pub fn test_floats() {
         pool.push_float(float);
     }
 
-    let mut vm = Vm::new(pool.as_bytes());
-    vm.run();
-
+    let stack = vm::create_and_run(pool.as_bytes());
     let expected_stack: Vec<Value> = floats.into_iter().map(Value::Float).collect();
-    assert_eq!(vm.stack, expected_stack);
+    assert_eq!(stack, expected_stack);
 }
 
 #[test]
@@ -43,12 +43,23 @@ pub fn test_strings() {
         pool.push_str(str);
     }
 
-    let mut vm = Vm::new(pool.as_bytes());
-    vm.run();
+    let stack = vm::create_and_run(pool.as_bytes());
 
     let expected_stack: Vec<Value> = strings
         .into_iter()
         .map(|str| Value::Str(Cow::Borrowed(str)))
         .collect();
-    assert_eq!(vm.stack, expected_stack);
+
+    assert_eq!(stack, expected_stack);
+}
+
+#[test]
+pub fn test_int_add() {
+    let mut pool = Pool::default();
+    pool.push_int(1);
+    pool.push_int(2);
+    pool.push_binop(BinOp::Add);
+
+    let stack = vm::create_and_run(pool.as_bytes());
+    assert_eq!(stack, vec![Value::Int(3)]);
 }
