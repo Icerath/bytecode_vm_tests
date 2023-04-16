@@ -5,6 +5,7 @@ use crate::{
     value::Value,
 };
 
+#[must_use]
 pub fn create_and_run(bytes: &[u8]) -> Vec<Value> {
     let mut vm = Vm::new(bytes);
     vm.run();
@@ -19,6 +20,7 @@ pub struct Vm<'a> {
 }
 
 impl<'a> Vm<'a> {
+    #[must_use]
     pub fn new(bytes: &'a [u8]) -> Self {
         Self {
             bytes,

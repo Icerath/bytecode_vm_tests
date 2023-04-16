@@ -11,6 +11,7 @@ pub enum Value<'a> {
 
 impl<'a> Value<'a> {
     /// ## Panics
+    #[must_use]
     pub fn run_binop(lhs: Self, rhs: Self, op: BinOp) -> Self {
         match op {
             BinOp::Add => Self::add(lhs, rhs),

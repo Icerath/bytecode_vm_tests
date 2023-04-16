@@ -87,6 +87,7 @@ impl Pool {
         self.items.extend_from_slice(slice);
     }
     #[inline]
+    #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         self
     }
