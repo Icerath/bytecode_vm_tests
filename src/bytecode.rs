@@ -4,6 +4,7 @@ use std::ops::Deref;
 #[repr(u8)]
 pub enum Instruction {
     NOOP = 0,
+    Jump,
 
     BinOp,
 
@@ -24,7 +25,7 @@ impl Instruction {
             Self::NOOP | Self::LEN => 0,
             Self::BinOp => 1,
             Self::LoadInt | Self::LoadFloat => 8,
-            Self::PopJumpIfFalse => 2,
+            Self::PopJumpIfFalse | Self::Jump => 2,
         })
     }
 }
@@ -53,6 +54,12 @@ pub struct Pool {
 }
 
 impl Pool {
+    #[inline]
+    pub fn push_jump(&mut self, distance: u16) {
+        self.items.push(Instruction::Jump as u8);
+        self.items.extend_from_slice(&distance.to_le_bytes());
+        self.num_instructions += 1;
+    }
     #[inline]
     pub fn push_int(&mut self, int: i64) {
         self.items.push(Instruction::LoadInt as u8);
@@ -89,6 +96,13 @@ impl Pool {
     pub fn push_if(&mut self, subpool: &Pool) {
         self.push_pop_jump_if_false(subpool.num_instructions);
         self.items.extend_from_slice(&subpool.items);
+    }
+    #[inline]
+    pub fn push_if_or_else(&mut self, subpool: &Pool, or_else: &Pool) {
+        self.push_pop_jump_if_false(subpool.num_instructions + or_else.num_instructions + 1);
+        self.items.extend_from_slice(&subpool.items);
+        self.push_jump(or_else.num_instructions);
+        self.items.extend_from_slice(&or_else.items);
     }
     /// # Safety
     /// The vm can assume instructions are followed by their proper arguments

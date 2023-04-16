@@ -44,6 +44,12 @@ impl<'a> Vm<'a> {
         let instruction: Instruction = unsafe { std::mem::transmute(instruction_byte) };
 
         match instruction {
+            Instruction::Jump => {
+                let jump_distance_bytes = self.bytes[self.head..self.head + 2].try_into().unwrap();
+                let jump_distance = u16::from_le_bytes(jump_distance_bytes);
+                self.head += 2;
+                self.skip_instructions(jump_distance);
+            }
             Instruction::LoadInt => {
                 let int_bytes = self.bytes[self.head..self.head + 8].try_into().unwrap();
                 let int = i64::from_le_bytes(int_bytes);

@@ -227,6 +227,23 @@ mod binop_mul {
     }
 }
 
+mod test_jump {
+    use super::*;
+
+    #[test]
+    fn jump() {
+        let mut pool = Pool::default();
+        pool.push_jump(2);
+
+        pool.push_int(1);
+        pool.push_int(2);
+        pool.push_int(3);
+
+        let stack = vm::create_and_run(&pool);
+        assert_eq!(stack, vec![Value::Int(3)]);
+    }
+}
+
 mod test_pop_jump_if_false {
     use super::*;
 
@@ -290,5 +307,39 @@ mod test_pop_jump_if_false {
 
         let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Str(Cow::Borrowed(", World!"))]);
+    }
+
+    #[test]
+    fn if_else_true() {
+        let mut pool = Pool::default();
+
+        let mut if_body = Pool::default();
+        if_body.push_str("if");
+
+        let mut else_body = Pool::default();
+        else_body.push_str("else");
+
+        pool.push_int(1);
+        pool.push_if_or_else(&if_body, &else_body);
+
+        let stack = vm::create_and_run(&pool);
+        assert_eq!(stack, vec![Value::Str(Cow::Borrowed("if"))]);
+    }
+
+    #[test]
+    fn if_else_false() {
+        let mut pool = Pool::default();
+
+        let mut if_body = Pool::default();
+        if_body.push_str("if");
+
+        let mut else_body = Pool::default();
+        else_body.push_str("else");
+
+        pool.push_int(0);
+        pool.push_if_or_else(&if_body, &else_body);
+
+        let stack = vm::create_and_run(&pool);
+        assert_eq!(stack, vec![Value::Str(Cow::Borrowed("else"))]);
     }
 }
