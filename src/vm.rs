@@ -39,7 +39,6 @@ impl<'a> Vm<'a> {
 
         assert!(op_code_byte < OpCode::LEN as u8, "{op_code_byte:?}");
         let op_code: OpCode = unsafe { std::mem::transmute(op_code_byte) };
-        dbg!(op_code);
         match op_code {
             OpCode::Dup => {
                 let top = self.stack.last().unwrap();
