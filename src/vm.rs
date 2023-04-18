@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    bytecode::{BinOp, Instruction},
+    bytecode::{BinOp, OpCode},
     value::Value,
 };
 
@@ -34,40 +34,37 @@ impl<'a> Vm<'a> {
         }
     }
     pub fn run_next(&mut self) {
-        let instruction_byte = self.bytes[self.head];
+        let op_code_byte = self.bytes[self.head];
         self.head += 1;
 
-        assert!(
-            instruction_byte < Instruction::LEN as u8,
-            "{instruction_byte:?}"
-        );
-        let instruction: Instruction = unsafe { std::mem::transmute(instruction_byte) };
-        dbg!(instruction);
-        match instruction {
-            Instruction::Dup => {
+        assert!(op_code_byte < OpCode::LEN as u8, "{op_code_byte:?}");
+        let op_code: OpCode = unsafe { std::mem::transmute(op_code_byte) };
+        dbg!(op_code);
+        match op_code {
+            OpCode::Dup => {
                 let top = self.stack.last().unwrap();
                 self.stack.push(top.clone());
             }
-            Instruction::LoadInt => {
+            OpCode::LoadInt => {
                 let int = i64::from_le_bytes(self.read());
                 self.stack.push(Value::Int(int));
 
                 self.head += 8;
             }
-            Instruction::LoadFloat => {
+            OpCode::LoadFloat => {
                 let float = f64::from_le_bytes(self.read());
                 self.stack.push(Value::Float(float));
 
                 self.head += 8;
             }
-            Instruction::LoadStr => {
+            OpCode::LoadStr => {
                 let string_bytes = slice_take_while_ne(&self.bytes[self.head..], &0);
                 let string = std::str::from_utf8(string_bytes).unwrap();
                 self.stack.push(Value::Str(Cow::Borrowed(string)));
 
                 self.head += string_bytes.len();
             }
-            Instruction::BinOp => {
+            OpCode::BinOp => {
                 let op_byte = self.bytes[self.head];
                 let op: BinOp = unsafe { std::mem::transmute(op_byte) };
 
@@ -79,28 +76,28 @@ impl<'a> Vm<'a> {
                 let new_value = Value::run_binop(lhs, rhs, op);
                 self.stack.push(new_value);
             }
-            Instruction::Jump => {
+            OpCode::Jump => {
                 let jump_pos = usize::from_le_bytes(self.read());
                 self.head = jump_pos;
             }
-            Instruction::PopJumpIfFalse => {
+            OpCode::PopJumpIfFalse => {
                 let jump_pos = usize::from_le_bytes(self.read());
-                self.head += Instruction::JUMP_SIZE;
+                self.head += OpCode::JUMP_SIZE;
                 let value = self.stack.pop().unwrap();
                 if !bool::from(&value) {
                     self.head = jump_pos;
                 }
             }
 
-            Instruction::NOP => (),
-            Instruction::LEN => todo!("{instruction:?}"),
+            OpCode::NOP => (),
+            OpCode::LEN => todo!("{op_code:?}"),
         }
     }
     #[inline]
     #[must_use]
-    pub fn read_instruction(&self) -> Option<Instruction> {
+    pub fn read_op_code(&self) -> Option<OpCode> {
         let byte = self.bytes[self.head];
-        assert!(byte < Instruction::LEN as u8);
+        assert!(byte < OpCode::LEN as u8);
         unsafe { std::mem::transmute(byte) }
     }
     #[inline]

@@ -2,7 +2,7 @@ use std::{fmt, ops::Deref};
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
-pub enum Instruction {
+pub enum OpCode {
     NOP = 0,
 
     Dup,
@@ -19,7 +19,7 @@ pub enum Instruction {
     LEN,
 }
 
-impl Instruction {
+impl OpCode {
     pub const JUMP_SIZE: usize = usize::BITS as usize / 8;
     #[must_use]
     pub fn size(self) -> Option<u8> {
@@ -59,25 +59,25 @@ pub struct Pool {
 impl Pool {
     #[inline]
     pub fn push_dup(&mut self) {
-        self.items.push(Instruction::Dup as u8);
+        self.items.push(OpCode::Dup as u8);
     }
     #[inline]
     pub fn emit_jump(&mut self) -> usize {
-        self.items.push(Instruction::Jump as u8);
+        self.items.push(OpCode::Jump as u8);
         self.items.extend_from_slice(&0usize.to_le_bytes());
-        self.items.len() - Instruction::JUMP_SIZE
+        self.items.len() - OpCode::JUMP_SIZE
     }
     #[inline]
     pub fn emit_pop_jump_if_false(&mut self) -> usize {
-        self.items.push(Instruction::PopJumpIfFalse as u8);
+        self.items.push(OpCode::PopJumpIfFalse as u8);
         self.items.extend_from_slice(&0usize.to_le_bytes());
-        self.items.len() - Instruction::JUMP_SIZE
+        self.items.len() - OpCode::JUMP_SIZE
     }
     #[inline]
     pub fn patch_jump(&mut self, pos: usize) {
         let here = self.len();
-        let slice = &mut self.items[pos..pos + Instruction::JUMP_SIZE];
-        debug_assert_eq!(slice, &[0; Instruction::JUMP_SIZE]);
+        let slice = &mut self.items[pos..pos + OpCode::JUMP_SIZE];
+        debug_assert_eq!(slice, &[0; OpCode::JUMP_SIZE]);
         slice.copy_from_slice(&here.to_le_bytes());
     }
     #[inline]
@@ -86,34 +86,34 @@ impl Pool {
     }
     #[inline]
     pub fn jump_flag(&mut self, pos: usize) {
-        self.items.push(Instruction::Jump as u8);
+        self.items.push(OpCode::Jump as u8);
         self.items.extend_from_slice(&pos.to_le_bytes());
     }
     #[inline]
     pub fn pop_jump_flag_if_false(&mut self, pos: usize) {
-        self.items.push(Instruction::PopJumpIfFalse as u8);
+        self.items.push(OpCode::PopJumpIfFalse as u8);
         self.items.extend_from_slice(&pos.to_le_bytes());
     }
     #[inline]
     pub fn push_int(&mut self, int: i64) {
-        self.items.push(Instruction::LoadInt as u8);
+        self.items.push(OpCode::LoadInt as u8);
         self.items.extend_from_slice(&int.to_le_bytes());
     }
     #[inline]
     pub fn push_float(&mut self, float: f64) {
-        self.items.push(Instruction::LoadFloat as u8);
+        self.items.push(OpCode::LoadFloat as u8);
         self.items.extend_from_slice(&float.to_le_bytes());
     }
     /// Pushes a null terminated string
     #[inline]
     pub fn push_str(&mut self, str: &str) {
-        self.items.push(Instruction::LoadStr as u8);
+        self.items.push(OpCode::LoadStr as u8);
         self.items.extend_from_slice(str.as_bytes());
         self.items.push(0);
     }
     #[inline]
     pub fn push_binop(&mut self, binop: BinOp) {
-        self.items.push(Instruction::BinOp as u8);
+        self.items.push(OpCode::BinOp as u8);
         self.items.push(binop as u8);
     }
     #[inline]
@@ -164,48 +164,48 @@ impl fmt::Display for Pool {
         let mut head = 0;
         while head < self.len() {
             let op_byte = self[head];
-            assert!(op_byte < Instruction::LEN as u8);
-            let op: Instruction = unsafe { std::mem::transmute(op_byte) };
+            assert!(op_byte < OpCode::LEN as u8);
+            let op: OpCode = unsafe { std::mem::transmute(op_byte) };
 
             write!(f, "{head} ")?;
             head += 1;
 
             match op {
-                Instruction::LEN => unreachable!(),
-                Instruction::Dup => writeln!(f, "Dup")?,
-                Instruction::NOP => writeln!(f, "Nop")?,
-                Instruction::BinOp => {
+                OpCode::LEN => unreachable!(),
+                OpCode::Dup => writeln!(f, "Dup")?,
+                OpCode::NOP => writeln!(f, "Nop")?,
+                OpCode::BinOp => {
                     let binop_byte = self[head];
                     let binop: BinOp = unsafe { std::mem::transmute(binop_byte) };
                     writeln!(f, "BinOp ({binop:?})")?;
                     head += 1;
                 }
-                Instruction::LoadFloat => {
+                OpCode::LoadFloat => {
                     let float = f64::from_le_bytes(read(self, head));
                     writeln!(f, "LoadFloat ({float})")?;
                     head += 8;
                 }
-                Instruction::LoadInt => {
+                OpCode::LoadInt => {
                     let int = i64::from_le_bytes(read(self, head));
                     writeln!(f, "LoadInt ({int})")?;
                     head += 8;
                 }
-                Instruction::LoadStr => {
+                OpCode::LoadStr => {
                     let num_bytes = self[head..].iter().take_while(|&b| *b != 0).count();
                     let str_bytes = &self[head..head + num_bytes];
                     let str = std::str::from_utf8(str_bytes).unwrap();
                     writeln!(f, "LoadStr ({str})")?;
                     head += num_bytes + 1;
                 }
-                Instruction::Jump => {
+                OpCode::Jump => {
                     let jump = usize::from_le_bytes(read(self, head));
                     writeln!(f, "Jump ({jump})")?;
-                    head += Instruction::JUMP_SIZE;
+                    head += OpCode::JUMP_SIZE;
                 }
-                Instruction::PopJumpIfFalse => {
+                OpCode::PopJumpIfFalse => {
                     let jump = usize::from_le_bytes(read(self, head));
                     writeln!(f, "PopJumpIfFalse ({jump})")?;
-                    head += Instruction::JUMP_SIZE;
+                    head += OpCode::JUMP_SIZE;
                 }
             }
         }
