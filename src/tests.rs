@@ -264,33 +264,6 @@ mod test_jump {
 
 mod test_pop_jump_if_false {
     use super::*;
-
-    // #[test]
-    // fn jump_false() {
-    //     let mut pool = Pool::default();
-    //     pool.push_int(5);
-    //     pool.push_int(0);
-    //     pool.push_pop_jump_if_false_raw(18);
-    //     pool.push_int(2);
-    //     pool.push_float(3.3);
-
-    //     let stack = vm::create_and_run(&pool);
-    //     assert_eq!(stack, vec![Value::Int(5)]);
-    // }
-
-    // #[test]
-    // fn jump_true() {
-    //     let mut pool = Pool::default();
-    //     pool.push_int(5);
-    //     pool.push_int(1);
-    //     pool.push_pop_jump_if_false_raw(18);
-    //     pool.push_int(2);
-    //     pool.push_float(3.3);
-
-    //     let stack = vm::create_and_run(&pool);
-    //     assert_eq!(stack, vec![Value::Int(5), Value::Int(2), Value::Float(3.3)]);
-    // }
-
     #[test]
     fn if_true() {
         let mut pool = Pool::default();
