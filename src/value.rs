@@ -70,3 +70,27 @@ impl<'a> From<&Value<'a>> for bool {
         }
     }
 }
+
+impl<'a> From<i64> for Value<'a> {
+    fn from(value: i64) -> Self {
+        Self::Int(value)
+    }
+}
+
+impl<'a> From<f64> for Value<'a> {
+    fn from(value: f64) -> Self {
+        Self::Float(value)
+    }
+}
+
+impl<'a> From<&'a str> for Value<'a> {
+    fn from(value: &'a str) -> Self {
+        Self::Str(Cow::Borrowed(value))
+    }
+}
+
+impl<'a> From<String> for Value<'a> {
+    fn from(value: String) -> Self {
+        Self::Str(Cow::Owned(value))
+    }
+}

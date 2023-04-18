@@ -37,6 +37,9 @@ impl<'a> Pool<'a> {
         let index = self.insert_const(val);
         self.push_u16(OpCode::LoadConst, index);
     }
+    pub fn push_literal<V: Into<Value<'a>>>(&mut self, val: V) {
+        self.push_const(val.into());
+    }
     pub fn push_binop(&mut self, binop: BinOp) {
         self.push(OpCode::BinOp, [binop as u8, 0]);
     }
