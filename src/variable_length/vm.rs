@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{
+use super::{
     bytecode::{BinOp, OpCode},
     value::Value,
 };
