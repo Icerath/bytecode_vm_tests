@@ -231,47 +231,65 @@ mod test_jump {
     use super::*;
 
     #[test]
-    fn jump() {
+    fn patch_jump() {
         let mut pool = Pool::default();
-        pool.push_jump_raw(18);
 
         pool.push_int(1);
+        let jump = pool.emit_jump();
         pool.push_int(2);
         pool.push_int(3);
+        pool.patch_jump(jump);
+        pool.push_int(4);
 
         let stack = vm::create_and_run(&pool);
-        assert_eq!(stack, vec![Value::Int(3)]);
+        assert_eq!(stack, vec![Value::Int(1), Value::Int(4)]);
+    }
+
+    #[test]
+    fn jump_flag() {
+        let mut pool = Pool::default();
+
+        pool.push_int(1);
+        let flag = pool.emit_flag();
+        pool.push_int(1);
+        pool.push_binop(BinOp::Sub);
+        pool.push_dup();
+        pool.pop_jump_flag_if_false(flag);
+
+        eprintln!("{pool}");
+        let stack = vm::create_and_run(&pool);
+        assert_eq!(stack, vec![Value::Int(-1)]);
     }
 }
 
 mod test_pop_jump_if_false {
     use super::*;
 
-    #[test]
-    fn jump_false() {
-        let mut pool = Pool::default();
-        pool.push_int(5);
-        pool.push_int(0);
-        pool.push_pop_jump_if_false_raw(18);
-        pool.push_int(2);
-        pool.push_float(3.3);
+    // #[test]
+    // fn jump_false() {
+    //     let mut pool = Pool::default();
+    //     pool.push_int(5);
+    //     pool.push_int(0);
+    //     pool.push_pop_jump_if_false_raw(18);
+    //     pool.push_int(2);
+    //     pool.push_float(3.3);
 
-        let stack = vm::create_and_run(&pool);
-        assert_eq!(stack, vec![Value::Int(5)]);
-    }
+    //     let stack = vm::create_and_run(&pool);
+    //     assert_eq!(stack, vec![Value::Int(5)]);
+    // }
 
-    #[test]
-    fn jump_true() {
-        let mut pool = Pool::default();
-        pool.push_int(5);
-        pool.push_int(1);
-        pool.push_pop_jump_if_false_raw(18);
-        pool.push_int(2);
-        pool.push_float(3.3);
+    // #[test]
+    // fn jump_true() {
+    //     let mut pool = Pool::default();
+    //     pool.push_int(5);
+    //     pool.push_int(1);
+    //     pool.push_pop_jump_if_false_raw(18);
+    //     pool.push_int(2);
+    //     pool.push_float(3.3);
 
-        let stack = vm::create_and_run(&pool);
-        assert_eq!(stack, vec![Value::Int(5), Value::Int(2), Value::Float(3.3)]);
-    }
+    //     let stack = vm::create_and_run(&pool);
+    //     assert_eq!(stack, vec![Value::Int(5), Value::Int(2), Value::Float(3.3)]);
+    // }
 
     #[test]
     fn if_true() {
@@ -284,6 +302,7 @@ mod test_pop_jump_if_false {
         pool.push_if(&if_body);
         pool.push_str(", World!");
 
+        eprintln!("{pool}");
         let stack = vm::create_and_run(&pool);
         assert_eq!(
             stack,
@@ -348,25 +367,6 @@ mod loops {
     use super::*;
 
     #[test]
-    fn test_break_loop() {
-        let mut pool = Pool::default();
-        pool.push_int(10);
-
-        let mut loop_body = Pool::default();
-        loop_body.push_dup();
-        loop_body.push_pop_jump_if_false_raw(9 + 2 + 5);
-
-        loop_body.push_int(1);
-        loop_body.push_binop(BinOp::Sub);
-
-        pool.push_loop(&loop_body);
-
-        let stack = vm::create_and_run(&pool);
-
-        assert_eq!(stack, vec![Value::Int(0)]);
-    }
-
-    #[test]
     fn test_while_loop() {
         let mut pool = Pool::default();
         pool.push_int(10);
@@ -379,8 +379,8 @@ mod loops {
         let loop_body = Pool::default();
         pool.push_while_loop(&condition, &loop_body);
 
+        eprintln!("{pool}");
         let stack = vm::create_and_run(&pool);
-
         assert_eq!(stack, vec![Value::Int(0)]);
     }
 }

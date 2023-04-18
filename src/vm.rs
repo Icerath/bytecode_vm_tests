@@ -42,22 +42,20 @@ impl<'a> Vm<'a> {
             "{instruction_byte:?}"
         );
         let instruction: Instruction = unsafe { std::mem::transmute(instruction_byte) };
-
+        dbg!(instruction);
         match instruction {
             Instruction::Dup => {
                 let top = self.stack.last().unwrap();
                 self.stack.push(top.clone());
             }
             Instruction::LoadInt => {
-                let int_bytes = self.bytes[self.head..self.head + 8].try_into().unwrap();
-                let int = i64::from_le_bytes(int_bytes);
+                let int = i64::from_le_bytes(self.read());
                 self.stack.push(Value::Int(int));
 
                 self.head += 8;
             }
             Instruction::LoadFloat => {
-                let float_bytes = self.bytes[self.head..self.head + 8].try_into().unwrap();
-                let float = f64::from_le_bytes(float_bytes);
+                let float = f64::from_le_bytes(self.read());
                 self.stack.push(Value::Float(float));
 
                 self.head += 8;
@@ -73,38 +71,28 @@ impl<'a> Vm<'a> {
                 let op_byte = self.bytes[self.head];
                 let op: BinOp = unsafe { std::mem::transmute(op_byte) };
 
+                self.head += 1;
+
                 let rhs = self.stack.pop().unwrap();
                 let lhs = self.stack.pop().unwrap();
 
                 let new_value = Value::run_binop(lhs, rhs, op);
                 self.stack.push(new_value);
-
-                self.head += 1;
             }
             Instruction::Jump => {
-                let jump_distance_bytes = self.bytes[self.head..self.head + 4].try_into().unwrap();
-                let jump_distance = i32::from_le_bytes(jump_distance_bytes);
-                self.head += 4;
-                self.head = self
-                    .head
-                    .checked_add_signed(jump_distance as isize)
-                    .unwrap();
+                let jump_pos = usize::from_le_bytes(self.read());
+                self.head = jump_pos;
             }
             Instruction::PopJumpIfFalse => {
-                let jump_distance_bytes = self.bytes[self.head..self.head + 4].try_into().unwrap();
-                let jump_distance = i32::from_le_bytes(jump_distance_bytes);
-                self.head += 4;
-
+                let jump_pos = usize::from_le_bytes(self.read());
+                self.head += Instruction::JUMP_SIZE;
                 let value = self.stack.pop().unwrap();
                 if !bool::from(&value) {
-                    self.head = self
-                        .head
-                        .checked_add_signed(jump_distance as isize)
-                        .unwrap();
+                    self.head = jump_pos;
                 }
             }
 
-            Instruction::NOOP => (),
+            Instruction::NOP => (),
             Instruction::LEN => todo!("{instruction:?}"),
         }
     }
@@ -114,6 +102,11 @@ impl<'a> Vm<'a> {
         let byte = self.bytes[self.head];
         assert!(byte < Instruction::LEN as u8);
         unsafe { std::mem::transmute(byte) }
+    }
+    #[inline]
+    #[must_use]
+    pub fn read<const LEN: usize>(&self) -> [u8; LEN] {
+        self.bytes[self.head..self.head + LEN].try_into().unwrap()
     }
 }
 
