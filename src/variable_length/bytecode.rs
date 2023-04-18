@@ -1,5 +1,7 @@
 use std::{fmt, ops::Deref};
 
+use crate::BinOp;
+
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum OpCode {
@@ -32,23 +34,6 @@ impl OpCode {
             Self::LoadInt | Self::LoadFloat => 8,
         })
     }
-}
-
-#[repr(u8)]
-#[derive(Debug, Clone, Copy)]
-pub enum BinOp {
-    Add = 0,
-    Sub,
-    Mul,
-    Div,
-    Mod,
-
-    LE,
-    LT,
-    GE,
-    GT,
-    Eq,
-    Ne,
 }
 
 #[derive(Debug, Default)]

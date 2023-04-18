@@ -1,10 +1,6 @@
+use super::{bytecode::Pool, vm};
+use crate::{BinOp, Value};
 use std::borrow::Cow;
-
-use super::{
-    bytecode::{BinOp, Pool},
-    value::Value,
-    vm,
-};
 
 mod load_literals {
     use super::*;

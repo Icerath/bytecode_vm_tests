@@ -1,9 +1,6 @@
+use super::bytecode::OpCode;
+use crate::{BinOp, Value};
 use std::borrow::Cow;
-
-use super::{
-    bytecode::{BinOp, OpCode},
-    value::Value,
-};
 
 #[must_use]
 pub fn create_and_run(bytes: &[u8]) -> Vec<Value> {
@@ -105,17 +102,6 @@ impl<'a> Vm<'a> {
         self.bytes[self.head..self.head + LEN].try_into().unwrap()
     }
 }
-
-impl<'a> From<&Value<'a>> for bool {
-    fn from(value: &Value<'a>) -> Self {
-        match value {
-            Value::Int(int) => *int != 0,
-            Value::Str(str) => str.is_empty(),
-            Value::Float(float) => *float != 0.0,
-        }
-    }
-}
-
 #[inline]
 fn slice_take_while_ne<'a, T: Eq>(slice: &'a [T], target: &T) -> &'a [T] {
     for (index, item) in slice.iter().enumerate() {

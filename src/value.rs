@@ -1,8 +1,7 @@
+use crate::BinOp;
 use std::borrow::Cow;
 
-use super::bytecode::BinOp;
-
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum Value<'a> {
     Int(i64),
     Float(f64),
@@ -58,6 +57,16 @@ impl<'a> Value<'a> {
             }
 
             (lhs, rhs) => todo!("{lhs:?} - {rhs:?}"),
+        }
+    }
+}
+
+impl<'a> From<&Value<'a>> for bool {
+    fn from(value: &Value<'a>) -> Self {
+        match value {
+            Value::Int(int) => *int != 0,
+            Value::Str(str) => str.is_empty(),
+            Value::Float(float) => *float != 0.0,
         }
     }
 }
