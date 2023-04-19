@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "petty_vm_test"
+name = "bytecode_vm_tests"
 version = "0.1.0"
