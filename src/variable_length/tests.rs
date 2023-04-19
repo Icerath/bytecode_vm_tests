@@ -231,7 +231,7 @@ mod test_jump {
         let mut pool = Pool::default();
 
         pool.push_int(1);
-        let jump = pool.emit_jump();
+        let jump = pool.push_jump(0);
         pool.push_int(2);
         pool.push_int(3);
         pool.patch_jump(jump);
@@ -246,11 +246,11 @@ mod test_jump {
         let mut pool = Pool::default();
 
         pool.push_int(1);
-        let flag = pool.emit_flag();
+        let flag = pool.len();
         pool.push_int(1);
         pool.push_binop(BinOp::Sub);
         pool.push_dup();
-        pool.pop_jump_flag_if_false(flag);
+        pool.push_pop_jump_if_false(flag);
 
         eprintln!("{pool}");
         let stack = vm::create_and_run(&pool);

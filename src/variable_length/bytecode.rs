@@ -47,15 +47,15 @@ impl Pool {
         self.items.push(OpCode::Dup as u8);
     }
     #[inline]
-    pub fn emit_jump(&mut self) -> usize {
+    pub fn push_jump(&mut self, pos: usize) -> usize {
         self.items.push(OpCode::Jump as u8);
-        self.items.extend_from_slice(&0usize.to_le_bytes());
+        self.items.extend_from_slice(&pos.to_le_bytes());
         self.items.len() - OpCode::JUMP_SIZE
     }
     #[inline]
-    pub fn emit_pop_jump_if_false(&mut self) -> usize {
+    pub fn push_pop_jump_if_false(&mut self, pos: usize) -> usize {
         self.items.push(OpCode::PopJumpIfFalse as u8);
-        self.items.extend_from_slice(&0usize.to_le_bytes());
+        self.items.extend_from_slice(&pos.to_le_bytes());
         self.items.len() - OpCode::JUMP_SIZE
     }
     #[inline]
@@ -64,20 +64,6 @@ impl Pool {
         let slice = &mut self.items[pos..pos + OpCode::JUMP_SIZE];
         debug_assert_eq!(slice, &[0; OpCode::JUMP_SIZE]);
         slice.copy_from_slice(&here.to_le_bytes());
-    }
-    #[inline]
-    pub fn emit_flag(&mut self) -> usize {
-        self.len()
-    }
-    #[inline]
-    pub fn jump_flag(&mut self, pos: usize) {
-        self.items.push(OpCode::Jump as u8);
-        self.items.extend_from_slice(&pos.to_le_bytes());
-    }
-    #[inline]
-    pub fn pop_jump_flag_if_false(&mut self, pos: usize) {
-        self.items.push(OpCode::PopJumpIfFalse as u8);
-        self.items.extend_from_slice(&pos.to_le_bytes());
     }
     #[inline]
     pub fn push_int(&mut self, int: i64) {
@@ -103,32 +89,32 @@ impl Pool {
     }
     #[inline]
     pub fn push_if(&mut self, subpool: &Pool) {
-        let jump = self.emit_pop_jump_if_false();
+        let jump = self.push_pop_jump_if_false(0);
         self.items.extend_from_slice(&subpool.items);
         self.patch_jump(jump);
     }
     #[inline]
     pub fn push_if_or_else(&mut self, subpool: &Pool, or_else: &Pool) {
-        let jump_if = self.emit_pop_jump_if_false();
+        let jump_if = self.push_pop_jump_if_false(0);
         self.items.extend_from_slice(&subpool.items);
-        let jump_else = self.emit_jump();
+        let jump_else = self.push_jump(0);
         self.patch_jump(jump_if);
         self.items.extend_from_slice(&or_else.items);
         self.patch_jump(jump_else);
     }
     #[inline]
     pub fn push_loop(&mut self, body: &Pool) {
-        let flag = self.emit_flag();
+        let start = self.len();
         self.items.extend_from_slice(body);
-        self.jump_flag(flag);
+        self.push_jump(start);
     }
     #[inline]
     pub fn push_while_loop(&mut self, condition: &Pool, body: &Pool) {
-        let flag = self.emit_flag();
+        let start = self.len();
         self.items.extend_from_slice(condition);
-        let jump = self.emit_pop_jump_if_false();
+        let jump = self.push_pop_jump_if_false(0);
         self.items.extend_from_slice(body);
-        self.jump_flag(flag);
+        self.push_jump(start);
         self.patch_jump(jump);
     }
     #[must_use]
