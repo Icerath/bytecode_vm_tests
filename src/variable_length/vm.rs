@@ -1,10 +1,9 @@
-use super::bytecode::OpCode;
+use super::bytecode::{OpCode, Pool};
 use crate::{BinOp, Value};
-use std::borrow::Cow;
 
 #[must_use]
-pub fn create_and_run(bytes: &[u8]) -> Vec<Value> {
-    let mut vm = Vm::new(bytes);
+pub fn create_and_run<'a>(pool: &'a Pool<'a>) -> Vec<Value<'a>> {
+    let mut vm = Vm::new(pool.as_bytes(), &pool.constants);
     vm.run();
     vm.stack
 }
@@ -12,15 +11,17 @@ pub fn create_and_run(bytes: &[u8]) -> Vec<Value> {
 #[derive(Debug)]
 pub struct Vm<'a> {
     pub bytes: &'a [u8],
+    pub constants: &'a [Value<'a>],
     pub head: usize,
     pub stack: Vec<Value<'a>>,
 }
 
 impl<'a> Vm<'a> {
     #[must_use]
-    pub fn new(bytes: &'a [u8]) -> Self {
+    pub fn new(bytes: &'a [u8], constants: &'a [Value<'a>]) -> Self {
         Self {
             bytes,
+            constants,
             head: 0,
             stack: vec![],
         }
@@ -41,24 +42,11 @@ impl<'a> Vm<'a> {
                 let top = self.stack.last().unwrap();
                 self.stack.push(top.clone());
             }
-            OpCode::LoadInt => {
-                let int = i64::from_le_bytes(self.read());
-                self.stack.push(Value::Int(int));
-
-                self.head += 8;
-            }
-            OpCode::LoadFloat => {
-                let float = f64::from_le_bytes(self.read());
-                self.stack.push(Value::Float(float));
-
-                self.head += 8;
-            }
-            OpCode::LoadStr => {
-                let string_bytes = slice_take_while_ne(&self.bytes[self.head..], &0);
-                let string = std::str::from_utf8(string_bytes).unwrap();
-                self.stack.push(Value::Str(Cow::Borrowed(string)));
-
-                self.head += string_bytes.len();
+            OpCode::LoadConst => {
+                let index = u32::from_le_bytes(self.read()) as usize;
+                let constant = &self.constants[index];
+                self.stack.push(constant.clone());
+                self.head += 4;
             }
             OpCode::BinOp => {
                 let op_byte = self.bytes[self.head];
@@ -101,13 +89,4 @@ impl<'a> Vm<'a> {
     pub fn read<const LEN: usize>(&self) -> [u8; LEN] {
         self.bytes[self.head..self.head + LEN].try_into().unwrap()
     }
-}
-#[inline]
-fn slice_take_while_ne<'a, T: Eq>(slice: &'a [T], target: &T) -> &'a [T] {
-    for (index, item) in slice.iter().enumerate() {
-        if item == target {
-            return &slice[..index];
-        }
-    }
-    slice
 }

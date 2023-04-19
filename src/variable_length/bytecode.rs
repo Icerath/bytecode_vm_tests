@@ -1,6 +1,6 @@
 use std::{fmt, ops::Deref};
 
-use crate::BinOp;
+use crate::{BinOp, Value};
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -11,9 +11,7 @@ pub enum OpCode {
 
     BinOp,
 
-    LoadStr,
-    LoadInt,
-    LoadFloat,
+    LoadConst,
 
     Jump,
     PopJumpIfFalse,
@@ -26,22 +24,22 @@ impl OpCode {
     #[must_use]
     pub fn size(self) -> Option<u8> {
         Some(match self {
-            Self::LoadStr => return None,
+            Self::LoadConst => 4,
             Self::NOP | Self::LEN => 0,
             Self::BinOp | Self::Dup => 1,
             #[allow(clippy::cast_possible_truncation)]
             Self::Jump | Self::PopJumpIfFalse => Self::JUMP_SIZE as u8,
-            Self::LoadInt | Self::LoadFloat => 8,
         })
     }
 }
 
 #[derive(Debug, Default)]
-pub struct Pool {
+pub struct Pool<'a> {
     items: Vec<u8>,
+    pub constants: Vec<Value<'a>>,
 }
 
-impl Pool {
+impl<'a> Pool<'a> {
     #[inline]
     pub fn push_dup(&mut self) {
         self.items.push(OpCode::Dup as u8);
@@ -66,21 +64,23 @@ impl Pool {
         slice.copy_from_slice(&here.to_le_bytes());
     }
     #[inline]
-    pub fn push_int(&mut self, int: i64) {
-        self.items.push(OpCode::LoadInt as u8);
-        self.items.extend_from_slice(&int.to_le_bytes());
+    pub fn push_const(&mut self, value: Value<'a>) -> usize {
+        self.items.push(OpCode::LoadConst as u8);
+
+        let index = if let Some(index) = self.constants.iter().position(|val| val == &value) {
+            index
+        } else {
+            self.constants.push(value);
+            self.constants.len() - 1
+        };
+        let index_u32 = u32::try_from(index).unwrap();
+        self.items.extend_from_slice(&index_u32.to_le_bytes());
+
+        index
     }
     #[inline]
-    pub fn push_float(&mut self, float: f64) {
-        self.items.push(OpCode::LoadFloat as u8);
-        self.items.extend_from_slice(&float.to_le_bytes());
-    }
-    /// Pushes a null terminated string
-    #[inline]
-    pub fn push_str(&mut self, str: &str) {
-        self.items.push(OpCode::LoadStr as u8);
-        self.items.extend_from_slice(str.as_bytes());
-        self.items.push(0);
+    pub fn push_literal<V: Into<Value<'a>>>(&mut self, value: V) -> usize {
+        self.push_const(value.into())
     }
     #[inline]
     pub fn push_binop(&mut self, binop: BinOp) {
@@ -88,18 +88,25 @@ impl Pool {
         self.items.push(binop as u8);
     }
     #[inline]
-    pub fn push_if(&mut self, subpool: &Pool) {
+    pub fn push_if<F>(&mut self, body: F)
+    where
+        F: FnOnce(&mut Self),
+    {
         let jump = self.push_pop_jump_if_false(0);
-        self.items.extend_from_slice(&subpool.items);
+        body(self);
         self.patch_jump(jump);
     }
     #[inline]
-    pub fn push_if_or_else(&mut self, subpool: &Pool, or_else: &Pool) {
+    pub fn push_if_or_else<F1, F2>(&mut self, body: F1, or_else: F2)
+    where
+        F1: FnOnce(&mut Self),
+        F2: FnOnce(&mut Self),
+    {
         let jump_if = self.push_pop_jump_if_false(0);
-        self.items.extend_from_slice(&subpool.items);
+        body(self);
         let jump_else = self.push_jump(0);
         self.patch_jump(jump_if);
-        self.items.extend_from_slice(&or_else.items);
+        or_else(self);
         self.patch_jump(jump_else);
     }
     #[inline]
@@ -123,14 +130,14 @@ impl Pool {
     }
 }
 
-impl Deref for Pool {
+impl<'a> Deref for Pool<'a> {
     type Target = [u8];
     fn deref(&self) -> &Self::Target {
         &self.items
     }
 }
 
-impl fmt::Display for Pool {
+impl<'a> fmt::Display for Pool<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut head = 0;
         while head < self.len() {
@@ -151,22 +158,10 @@ impl fmt::Display for Pool {
                     writeln!(f, "BinOp ({binop:?})")?;
                     head += 1;
                 }
-                OpCode::LoadFloat => {
-                    let float = f64::from_le_bytes(read(self, head));
-                    writeln!(f, "LoadFloat ({float})")?;
-                    head += 8;
-                }
-                OpCode::LoadInt => {
-                    let int = i64::from_le_bytes(read(self, head));
-                    writeln!(f, "LoadInt ({int})")?;
-                    head += 8;
-                }
-                OpCode::LoadStr => {
-                    let num_bytes = self[head..].iter().take_while(|&b| *b != 0).count();
-                    let str_bytes = &self[head..head + num_bytes];
-                    let str = std::str::from_utf8(str_bytes).unwrap();
-                    writeln!(f, "LoadStr ({str})")?;
-                    head += num_bytes + 1;
+                OpCode::LoadConst => {
+                    let index = u32::from_le_bytes(read(self, head)) as usize;
+                    let value = &self.constants[index];
+                    writeln!(f, "LoadConst ({index}) ({value:?})")?;
                 }
                 OpCode::Jump => {
                     let jump = usize::from_le_bytes(read(self, head));

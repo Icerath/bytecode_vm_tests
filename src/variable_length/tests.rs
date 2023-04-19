@@ -11,7 +11,7 @@ mod load_literals {
 
         let mut pool = Pool::default();
         for int in ints {
-            pool.push_int(int);
+            pool.push_literal(int);
         }
 
         let stack = vm::create_and_run(&pool);
@@ -25,7 +25,7 @@ mod load_literals {
 
         let mut pool = Pool::default();
         for float in floats {
-            pool.push_float(float);
+            pool.push_literal(float);
         }
 
         let stack = vm::create_and_run(&pool);
@@ -39,7 +39,7 @@ mod load_literals {
 
         let mut pool = Pool::default();
         for str in strings {
-            pool.push_str(str);
+            pool.push_literal(str);
         }
 
         let stack = vm::create_and_run(&pool);
@@ -59,8 +59,8 @@ mod binop_add {
     #[test]
     pub fn int() {
         let mut pool = Pool::default();
-        pool.push_int(1);
-        pool.push_int(2);
+        pool.push_literal(1);
+        pool.push_literal(2);
         pool.push_binop(OP);
 
         let stack = vm::create_and_run(&pool);
@@ -70,8 +70,8 @@ mod binop_add {
     #[test]
     pub fn float() {
         let mut pool = Pool::default();
-        pool.push_float(1.23);
-        pool.push_float(4.56);
+        pool.push_literal(1.23);
+        pool.push_literal(4.56);
 
         pool.push_binop(OP);
 
@@ -82,12 +82,12 @@ mod binop_add {
     #[test]
     pub fn int_float() {
         let mut pool = Pool::default();
-        pool.push_int(1);
-        pool.push_float(0.5);
+        pool.push_literal(1);
+        pool.push_literal(0.5);
         pool.push_binop(OP);
 
-        pool.push_float(12.5);
-        pool.push_int(2);
+        pool.push_literal(12.5);
+        pool.push_literal(2);
         pool.push_binop(OP);
 
         let stack = vm::create_and_run(&pool);
@@ -100,8 +100,8 @@ mod binop_add {
     #[test]
     pub fn str() {
         let mut pool = Pool::default();
-        pool.push_str("Hello, ");
-        pool.push_str("World!");
+        pool.push_literal("Hello, ");
+        pool.push_literal("World!");
         pool.push_binop(OP);
 
         let stack = vm::create_and_run(&pool);
@@ -116,8 +116,8 @@ mod binop_sub {
     #[test]
     pub fn int() {
         let mut pool = Pool::default();
-        pool.push_int(1);
-        pool.push_int(2);
+        pool.push_literal(1);
+        pool.push_literal(2);
         pool.push_binop(OP);
 
         let stack = vm::create_and_run(&pool);
@@ -127,8 +127,8 @@ mod binop_sub {
     #[test]
     pub fn float() {
         let mut pool = Pool::default();
-        pool.push_float(1.23);
-        pool.push_float(4.56);
+        pool.push_literal(1.23);
+        pool.push_literal(4.56);
 
         pool.push_binop(OP);
 
@@ -139,12 +139,12 @@ mod binop_sub {
     #[test]
     pub fn int_float() {
         let mut pool = Pool::default();
-        pool.push_int(1);
-        pool.push_float(0.5);
+        pool.push_literal(1);
+        pool.push_literal(0.5);
         pool.push_binop(OP);
 
-        pool.push_float(12.5);
-        pool.push_int(2);
+        pool.push_literal(12.5);
+        pool.push_literal(2);
         pool.push_binop(OP);
 
         let stack = vm::create_and_run(&pool);
@@ -162,8 +162,8 @@ mod binop_mul {
     #[test]
     pub fn int() {
         let mut pool = Pool::default();
-        pool.push_int(1);
-        pool.push_int(2);
+        pool.push_literal(1);
+        pool.push_literal(2);
         pool.push_binop(OP);
 
         let stack = vm::create_and_run(&pool);
@@ -173,8 +173,8 @@ mod binop_mul {
     #[test]
     pub fn float() {
         let mut pool = Pool::default();
-        pool.push_float(1.23);
-        pool.push_float(4.56);
+        pool.push_literal(1.23);
+        pool.push_literal(4.56);
 
         pool.push_binop(OP);
 
@@ -185,12 +185,12 @@ mod binop_mul {
     #[test]
     pub fn int_float() {
         let mut pool = Pool::default();
-        pool.push_int(1);
-        pool.push_float(0.5);
+        pool.push_literal(1);
+        pool.push_literal(0.5);
         pool.push_binop(OP);
 
-        pool.push_float(12.5);
-        pool.push_int(2);
+        pool.push_literal(12.5);
+        pool.push_literal(2);
         pool.push_binop(OP);
 
         let stack = vm::create_and_run(&pool);
@@ -204,12 +204,12 @@ mod binop_mul {
     pub fn str_int() {
         let mut pool = Pool::default();
 
-        pool.push_str("repeat ");
-        pool.push_int(5);
+        pool.push_literal("repeat ");
+        pool.push_literal(5);
         pool.push_binop(OP);
 
-        pool.push_int(3);
-        pool.push_str("hello ");
+        pool.push_literal(3);
+        pool.push_literal("hello ");
         pool.push_binop(OP);
 
         let stack = vm::create_and_run(&pool);
@@ -230,12 +230,12 @@ mod test_jump {
     fn patch_jump() {
         let mut pool = Pool::default();
 
-        pool.push_int(1);
+        pool.push_literal(1);
         let jump = pool.push_jump(0);
-        pool.push_int(2);
-        pool.push_int(3);
+        pool.push_literal(2);
+        pool.push_literal(3);
         pool.patch_jump(jump);
-        pool.push_int(4);
+        pool.push_literal(4);
 
         let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Int(1), Value::Int(4)]);
@@ -245,9 +245,9 @@ mod test_jump {
     fn jump_flag() {
         let mut pool = Pool::default();
 
-        pool.push_int(1);
+        pool.push_literal(1);
         let flag = pool.len();
-        pool.push_int(1);
+        pool.push_literal(1);
         pool.push_binop(BinOp::Sub);
         pool.push_dup();
         pool.push_pop_jump_if_false(flag);
@@ -264,12 +264,11 @@ mod test_pop_jump_if_false {
     fn if_true() {
         let mut pool = Pool::default();
 
-        let mut if_body = Pool::default();
-        if_body.push_str("Hello");
-
-        pool.push_int(1);
-        pool.push_if(&if_body);
-        pool.push_str(", World!");
+        pool.push_literal(1);
+        pool.push_if(|if_body| {
+            if_body.push_literal("Hello");
+        });
+        pool.push_literal(", World!");
 
         eprintln!("{pool}");
         let stack = vm::create_and_run(&pool);
@@ -286,12 +285,11 @@ mod test_pop_jump_if_false {
     fn if_false() {
         let mut pool = Pool::default();
 
-        let mut if_body = Pool::default();
-        if_body.push_str("Hello");
-
-        pool.push_int(0);
-        pool.push_if(&if_body);
-        pool.push_str(", World!");
+        pool.push_literal(0);
+        pool.push_if(|if_body| {
+            if_body.push_literal("Hello");
+        });
+        pool.push_literal(", World!");
 
         let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Str(Cow::Borrowed(", World!"))]);
@@ -302,13 +300,20 @@ mod test_pop_jump_if_false {
         let mut pool = Pool::default();
 
         let mut if_body = Pool::default();
-        if_body.push_str("if");
+        if_body.push_literal("if");
 
         let mut else_body = Pool::default();
-        else_body.push_str("else");
+        else_body.push_literal("else");
 
-        pool.push_int(1);
-        pool.push_if_or_else(&if_body, &else_body);
+        pool.push_literal(1);
+        pool.push_if_or_else(
+            |if_body| {
+                if_body.push_literal("if");
+            },
+            |else_body| {
+                else_body.push_literal("else");
+            },
+        );
 
         let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Str(Cow::Borrowed("if"))]);
@@ -319,13 +324,20 @@ mod test_pop_jump_if_false {
         let mut pool = Pool::default();
 
         let mut if_body = Pool::default();
-        if_body.push_str("if");
+        if_body.push_literal("if");
 
         let mut else_body = Pool::default();
-        else_body.push_str("else");
+        else_body.push_literal("else");
 
-        pool.push_int(0);
-        pool.push_if_or_else(&if_body, &else_body);
+        pool.push_literal(0);
+        pool.push_if_or_else(
+            |if_body| {
+                if_body.push_literal("if");
+            },
+            |else_body| {
+                else_body.push_literal("else");
+            },
+        );
 
         let stack = vm::create_and_run(&pool);
         assert_eq!(stack, vec![Value::Str(Cow::Borrowed("else"))]);
@@ -338,10 +350,10 @@ mod loops {
     #[test]
     fn test_while_loop() {
         let mut pool = Pool::default();
-        pool.push_int(10);
+        pool.push_literal(10);
 
         let mut condition = Pool::default();
-        condition.push_int(1);
+        condition.push_literal(1);
         condition.push_binop(BinOp::Sub);
         condition.push_dup();
 
