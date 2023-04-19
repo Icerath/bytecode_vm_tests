@@ -110,17 +110,24 @@ impl<'a> Pool<'a> {
         self.patch_jump(jump_else);
     }
     #[inline]
-    pub fn push_loop(&mut self, body: &Pool) {
+    pub fn push_loop<F>(&mut self, body: F)
+    where
+        F: FnOnce(&mut Self),
+    {
         let start = self.len();
-        self.items.extend_from_slice(body);
+        body(self);
         self.push_jump(start);
     }
     #[inline]
-    pub fn push_while_loop(&mut self, condition: &Pool, body: &Pool) {
+    pub fn push_while_loop<F1, F2>(&mut self, condition: F1, body: F2)
+    where
+        F1: FnOnce(&mut Self),
+        F2: FnOnce(&mut Self),
+    {
         let start = self.len();
-        self.items.extend_from_slice(condition);
+        condition(self);
         let jump = self.push_pop_jump_if_false(0);
-        self.items.extend_from_slice(body);
+        body(self);
         self.push_jump(start);
         self.patch_jump(jump);
     }
@@ -162,6 +169,7 @@ impl<'a> fmt::Display for Pool<'a> {
                     let index = u32::from_le_bytes(read(self, head)) as usize;
                     let value = &self.constants[index];
                     writeln!(f, "LoadConst ({index}) ({value:?})")?;
+                    head += 4;
                 }
                 OpCode::Jump => {
                     let jump = usize::from_le_bytes(read(self, head));
