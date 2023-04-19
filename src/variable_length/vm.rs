@@ -54,8 +54,8 @@ impl<'a> Vm<'a> {
 
                 self.head += 1;
 
-                let rhs = self.stack.pop().unwrap();
-                let lhs = self.stack.pop().unwrap();
+                let rhs = self.stack.pop().expect("Failed to pop stack");
+                let lhs = self.stack.pop().expect("Failed to pop stack");
 
                 let new_value = Value::run_binop(lhs, rhs, op);
                 self.stack.push(new_value);

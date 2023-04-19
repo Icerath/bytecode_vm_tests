@@ -336,6 +336,29 @@ mod loops {
     use super::*;
 
     #[test]
+    fn test_loop() {
+        let mut pool = Pool::default();
+        pool.push_literal(4);
+
+        let mut jump = 0;
+        pool.push_loop(|body| {
+            body.push_literal(1);
+            body.push_binop(BinOp::Sub);
+            body.push_dup();
+            jump = body.push_pop_jump_if_false(0);
+            body.push_dup();
+        });
+        pool.patch_jump(jump);
+
+        eprintln!("{pool}");
+        let stack = vm::create_and_run(&pool);
+        assert_eq!(
+            stack,
+            vec![Value::Int(3), Value::Int(2), Value::Int(1), Value::Int(0)]
+        );
+    }
+
+    #[test]
     fn test_while_loop() {
         let mut pool = Pool::default();
         pool.push_literal(4);
