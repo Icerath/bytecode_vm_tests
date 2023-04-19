@@ -71,11 +71,19 @@ impl<'a> Pool<'a> {
         self.push_u16(OpCode::Jump, pos);
         self.len() - 3
     }
+    pub fn push_pop_jump_if_false(&mut self, pos: u16) -> usize {
+        self.push_u16(OpCode::PopJumpIfFalse, pos);
+        self.len() - 3
+    }
     pub fn patch_jump(&mut self, pos: usize) {
         let new_pos = u16::try_from(self.len()).unwrap();
         let new_pos_bytes = new_pos.to_le_bytes();
         self.bytes[pos + 1] = new_pos_bytes[0];
         self.bytes[pos + 2] = new_pos_bytes[1];
+    }
+    #[must_use]
+    pub fn len_u16(&self) -> u16 {
+        u16::try_from(self.len()).unwrap()
     }
 }
 

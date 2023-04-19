@@ -56,7 +56,7 @@ fn test_binops() {
 }
 
 #[test]
-fn jump() {
+fn test_jump() {
     let mut pool = Pool::default();
     pool.push_literal(1);
     let flag = pool.push_jump(0);
@@ -68,4 +68,17 @@ fn jump() {
     eprintln!("{pool}");
     let stack = vm::create_and_run(&pool);
     assert_eq!(stack, vec![Value::Int(1), Value::Int(4)]);
+}
+
+#[test]
+fn test_pop_jump_if_false() {
+    let mut pool = Pool::default();
+    pool.push_literal(1);
+    pool.push_literal(0);
+    let start = pool.len_u16();
+    pool.push_pop_jump_if_false(start);
+
+    eprintln!("{pool}");
+    let stack = vm::create_and_run(&pool);
+    assert_eq!(stack, vec![]);
 }

@@ -66,7 +66,17 @@ impl<'a> Vm<'a> {
                 self.head = location as usize;
                 return;
             }
-            _ => todo!("{op_code:?}"),
+            OpCode::PopJumpIfFalse => {
+                let location = self.read_u16();
+
+                let top = self.stack.pop().unwrap();
+
+                if !bool::from(&top) {
+                    self.head = location as usize;
+                    return;
+                }
+            }
+            OpCode::LEN => unreachable!(),
         }
 
         self.head += 2;
