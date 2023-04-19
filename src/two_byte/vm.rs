@@ -61,6 +61,11 @@ impl<'a> Vm<'a> {
                 let new_val = Value::run_binop(lhs, rhs, binop);
                 self.stack.push(new_val);
             }
+            OpCode::Jump => {
+                let location = self.read_u16();
+                self.head = location as usize;
+                return;
+            }
             _ => todo!("{op_code:?}"),
         }
 

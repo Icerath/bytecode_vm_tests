@@ -54,3 +54,18 @@ fn test_binops() {
         vec![Value::Str(Cow::Borrowed("Hello, Hello, Hello, "))]
     );
 }
+
+#[test]
+fn jump() {
+    let mut pool = Pool::default();
+    pool.push_literal(1);
+    let flag = pool.push_jump(0);
+    pool.push_literal(2);
+    pool.push_literal(3);
+    pool.patch_jump(flag);
+    pool.push_literal(4);
+
+    eprintln!("{pool}");
+    let stack = vm::create_and_run(&pool);
+    assert_eq!(stack, vec![Value::Int(1), Value::Int(4)]);
+}

@@ -37,6 +37,7 @@ impl<'a> Pool<'a> {
         let index = self.insert_const(val);
         self.push_u16(OpCode::LoadConst, index);
     }
+    #[inline]
     pub fn push_literal<V: Into<Value<'a>>>(&mut self, val: V) {
         self.push_const(val.into());
     }
@@ -65,6 +66,16 @@ impl<'a> Pool<'a> {
     #[must_use]
     pub fn get_const(&self, index: u16) -> Option<&Value<'a>> {
         self.constants.get(index as usize)
+    }
+    pub fn push_jump(&mut self, pos: u16) -> usize {
+        self.push_u16(OpCode::Jump, pos);
+        self.len() - 3
+    }
+    pub fn patch_jump(&mut self, pos: usize) {
+        let new_pos = u16::try_from(self.len()).unwrap();
+        let new_pos_bytes = new_pos.to_le_bytes();
+        self.bytes[pos + 1] = new_pos_bytes[0];
+        self.bytes[pos + 2] = new_pos_bytes[1];
     }
 }
 
